@@ -781,7 +781,7 @@ export default function HabitTrackerApp() {
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3 mb-4">
                     <Brain className="h-8 w-8 text-purple-500" />
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">AI Recommendations</h3>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">Smart Recommendations</h3>
                   </div>
                   <div className="space-y-3">
                     <div className="p-3 bg-purple-50 dark:bg-purple-900/50 rounded-lg">

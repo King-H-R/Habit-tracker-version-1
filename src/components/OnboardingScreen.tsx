@@ -187,7 +187,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
             </div>
             <div className="text-center p-4 rounded-lg bg-purple-50 dark:bg-purple-900/50">
               <Brain className="h-8 w-8 text-purple-500 mx-auto mb-2" />
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-1">AI Insights</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Smart Insights</h3>
               <p className="text-sm text-gray-600 dark:text-gray-300">Personalized recommendations</p>
             </div>
           </div>
