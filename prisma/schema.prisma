@@ -1,0 +1,211 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String   @id @default(cuid())
+  email             String   @unique
+  password          String?  // Hashed password for credentials auth
+  name              String?
+  avatar            String?
+  timezone          String   @default("UTC")
+  theme             String   @default("light") // light, dark, system
+  language          String   @default("en")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relations
+  habits            Habit[]
+  habitLogs         HabitLog[]
+  achievements      UserAchievement[]
+  goals             Goal[]
+  reflections       Reflection[]
+  moodEntries       MoodEntry[]
+  reminderSettings  ReminderSetting[]
+  
+  // Gamification
+  level             Int      @default(1)
+  experiencePoints  Int      @default(0)
+  totalCoins        Int      @default(0)
+  currentStreak     Int      @default(0)
+  longestStreak     Int      @default(0)
+}
+
+model Habit {
+  id              String   @id @default(cuid())
+  userId          String
+  name            String
+  description     String?
+  category        String   // health, study, finance, etc.
+  type            String   @default("yesno") // yesno, measurable
+  frequency       String   @default("daily") // daily, weekly, custom
+  targetValue     Int?     // for measurable habits (e.g., 8 glasses of water)
+  unit            String?  // e.g., "glasses", "minutes", "pages"
+  color           String   @default("#3B82F6")
+  icon            String?
+  position        Int      @default(0) // for drag & drop ordering
+  isPinned        Boolean  @default(false)
+  isActive        Boolean  @default(true)
+  
+  // Schedule
+  startDate       DateTime @default(now())
+  endDate         DateTime?
+  repeatDays      String?  // JSON string of days: ["mon", "tue", ...]
+  allowSkip       Boolean  @default(true) // skip doesn't break streak
+  allowedMisses   Int      @default(0) // allowed misses per week
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs            HabitLog[]
+  reminders       Reminder[]
+  
+  @@map("habits")
+}
+
+model HabitLog {
+  id          String   @id @default(cuid())
+  habitId     String
+  userId      String
+  date        DateTime @default(now())
+  status      String   // done, skipped, missed
+  value       Int?     // actual value for measurable habits
+  notes       String?
+  completedAt DateTime?
+  
+  createdAt   DateTime @default(now())
+  
+  // Relations
+  habit       Habit     @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([habitId, date])
+  @@map("habit_logs")
+}
+
+model Reminder {
+  id          String   @id @default(cuid())
+  habitId     String
+  time        String   // "07:00", "14:30"
+  message     String?
+  isActive    Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  habit       Habit     @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  
+  @@map("reminders")
+}
+
+model ReminderSetting {
+  id            String   @id @default(cuid())
+  userId        String
+  type          String   // default, smart, custom
+  enabled       Boolean  @default(true)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("reminder_settings")
+}
+
+model Achievement {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  icon        String
+  badgeColor  String
+  points      Int
+  condition   String   // JSON condition for unlocking
+  
+  createdAt   DateTime @default(now())
+  
+  // Relations
+  users       UserAchievement[]
+  
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime @default(now())
+  
+  // Relations
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, achievementId])
+  @@map("user_achievements")
+}
+
+model Goal {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  description String?
+  targetDate  DateTime?
+  status      String   @default("active") // active, completed, paused
+  progress    Int      @default(0) // 0-100
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("goals")
+}
+
+model Reflection {
+  id          String   @id @default(cuid())
+  userId      String
+  date        DateTime @default(now())
+  questions   String   // JSON of questions and answers
+  mood        String?
+  notes       String?
+  
+  createdAt   DateTime @default(now())
+  
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("reflections")
+}
+
+model MoodEntry {
+  id          String   @id @default(cuid())
+  userId      String
+  date        DateTime @default(now())
+  mood        String   // happy, sad, neutral, etc.
+  energy      Int?     // 1-10
+  stress      Int?     // 1-10
+  notes       String?
+  
+  createdAt   DateTime @default(now())
+  
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, date])
+  @@map("mood_entries")
+}
